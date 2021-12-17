@@ -1,7 +1,7 @@
 #!/bin/bash
 exec 3>&1 4>&2
 trap 'exec 2>&4 1>&3' 0 1 2 3
-exec 1>>loopForOldImages.log 2>&1
+exec 1>>./logs/loopForOldImages.log 2>&1
 
 if  [ "$#" -ne 2 ]; then
 	echo "Bad number of parameters : $#"
