@@ -160,7 +160,7 @@ main(){
       else
         echo "It has already moved as a duplicate file"
       fi
-      exit 1;
+      #exit 1;
     done
     rm /tmp/*.rgba
     printf "=================================================== Total runtime: %d seconds\n" "$((`date '+%s'` - $start))"
