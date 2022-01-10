@@ -141,15 +141,15 @@ main(){
             if [ "$result" == "" ] && [ "$filea" != "$fileb" ]; then
               if [ ! -d "$basedir$duplidir" ]; then
                 echo "Creating Directory for duplicate Fotos.........."
-                mkdir $basedir$duplidir
+                mkdir "$basedir$duplidir"
               fi
               echo "==>This file is Duplicated with $fileb"
               echo "Moving the file..."
               #getting the name of the file
               renamedFilePath=$(echo $filea | sed 's/ /\ /g' )
               renamedFile=$(echo ${filea##/*/} | sed 's/ /\ /g' )
-              echo "$renamedFilePath" $basedir$duplidir/"$renamedFile"
-              mv "$renamedFilePath" $basedir$duplidir/"$renamedFile"
+              echo "$renamedFilePath" "$basedir$duplidir/$renamedFile"
+              mv "$renamedFilePath" "$basedir$duplidir/$renamedFile"
               break
             fi
           done
