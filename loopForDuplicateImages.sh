@@ -113,8 +113,7 @@ main(){
     printf "Looking for duplicates images in %s%s \n" "${basedir}" "${fotosdir}"
     printf "Done File %s \n" "${filedone}"
 
-    #files="$(find -L "$basedir$fotosdir" -type f \( -iname "*.jpg" ! -iname "*-WA*.jpg" \) )"
-    files="$(find -L "$basedir$fotosdir" -type f \( -iname "*.jpg" \) )"
+    files="$(find -L "$basedir$fotosdir" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) )"
     totalfiles=$(echo -n "$files" | wc -l)
     echo "Count: $totalfiles"
     x=0
@@ -133,7 +132,7 @@ main(){
           filelsize=$((filesize-100))
           fileusize=$((filesize+100))
           #echo "Size of $filea = $filesize bytes. Range: $filelsize-$fileusize"
-          filesToCompare="$(find -L "$basedir$fotosdir" -type f -name *.jpg -size +"$filelsize"c -size -"$fileusize"c)"
+          filesToCompare="$(find -L "$basedir$fotosdir" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) -size +"$filelsize"c -size -"$fileusize"c)"
           echo "$filesToCompare" | while read fileb; do
             convertImage "$filea" /tmp/original.rgba
             convertImage "$fileb" /tmp/copy.rgba
