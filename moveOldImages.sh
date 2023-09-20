@@ -83,11 +83,11 @@ main(){
         mkdir -p "${newpath}"
       fi
       echo "moving ${filea}" "${newpath}${filename}"
-      mv -f "${filea}" "${newpath}${filename}"
-      #exit 1
+      #mv -f "${filea}" "${newpath}${filename}"
+      exit 1
     done
-    find "$localdir" -depth -type d -empty
-    find "$localdir" -depth -type d -empty -delete
+    #find "$localdir" -depth -type d -empty
+    #find "$localdir" -depth -type d -empty -delete
     printf "=================================================== Total runtime: %d seconds\n" "$((`date '+%s'` - $start))"
   else
     echo "Nothing to do..."

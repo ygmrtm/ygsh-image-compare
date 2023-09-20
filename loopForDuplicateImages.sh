@@ -163,6 +163,7 @@ main(){
     done
     rm /tmp/*.rgba
     printf "=================================================== Total runtime: %d seconds\n" "$((`date '+%s'` - $start))"
+    printf "Done at============================================ %s\n" "$(date)"
   else
     echo "Nothing to do..."
     exit 1
