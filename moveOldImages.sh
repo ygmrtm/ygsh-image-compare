@@ -26,12 +26,12 @@ runningMachine(){
 }
 
 validUsage(){
-  log_param=${3:---enablelog}
-  echo "[${1}][${2}][${log_param}]"
-  if  [ "$#" -lt 2 ] || [ "$#" -gt 3 ] || [ -z "${1}" ] || [ -z "${2}" ]; then
+  log_param=${5:---enablelog}
+  echo "[${1}][${2}][${3}][${4}][${log_param}]"
+  if  [ "$#" -lt 4 ] || [ "$#" -gt 5 ] || [ -z "${1}" ] || [ -z "${2}" ] || [ -z "${3}" ]; then
     echo "Bad number of parameters : $#"
-    echo "USAGE: ${0} /path/to/images/ /path/to/externalHD "
-    echo "   OR: ${0} /path/to/images/ /path/to/externalHD --nolog"
+    echo "USAGE: ${0} /path/to/images/ /path/to/externalHD backDays [c|m]"
+    echo "   OR: ${0} /path/to/images/ /path/to/externalHD backDays [c|m] --nolog"
     return 2;
   elif [ "$log_param" != "--nolog" ] && [ "$log_param" != "--enablelog" ]; then
     echo "Bad parameter for logs ${log_param}"
@@ -53,44 +53,72 @@ validExistingPath(){
     return 2
   fi
 }
-# /home/yg/MEGA/yg.rwmind/ /media/yg/yg.deus/Lalo/yg.rwmind
+
+#Delete the shortest match of string in $var from the beginning:
+#${var#string}
+#Delete the longest match of string in $var from the beginning:
+#${var##string}
+#Delete the shortest match of string in $var from the end:
+#${var%string}
+#Delete the longest match of string in $var from the end:
+#${var%%string}
 main(){
-  if validUsage "${1}" "${2}" "${3}" && validExistingPath "${1}" && validExistingPath "${2}"; then
+  if validUsage "${1}" "${2}" "${3}" "${4}" "${5}" && validExistingPath "${1}" && validExistingPath "${2}"; then
     [[ "${log_param}" == "--enablelog" ]] && enableLogs || echo "${log_param}"
     start=$(date +%s)
     localdir=$1
     remotedir=$2
+    daysback=$3
+    copymove=$4
     printf "=================================================== %s\n" "$(date)"
     printf "Looking for old images in $localdir \n"
-    printf "moving ... to $remotedir \n"
-    files="$(find -L "$localdir" -type f -mtime +730 )"
+    printf "destination $remotedir \n"
+    if [[ "c" == "${copymove}" ]]; then
+      files="$(find -L "$localdir" -type f -mtime -$daysback ! -path "*/.*" -prune )"
+    elif [[ "m" == "${copymove}" ]]; then
+      files="$(find -L "$localdir" -type f -mtime +$daysback )"
+    fi
+
     totalfiles=$(echo -n "$files" | wc -l)
     echo "Count: $totalfiles"
+    # shellcheck disable=SC1073
     x=0
-    echo "$files" | while read filea; do
-      echo "----------------------------------------------------------------------"
-      percent=$((((((x++))*100))/totalfiles))
-      echo "$percent% $filea"
-      filename="$(basename "$filea")"
-      currentpath=${filea%$filename*}
-      rootdir="yg.rwmind"
-      newpath="${remotedir}${rootdir}${currentpath}"
-      if [ -d "${newpath}" ]; then
-        ### Take action if $DIR exists ###
-        echo "Ok for this path ${newpath}..."
-      else
-        echo "${newpath} not found... creating it"
-        mkdir -p "${newpath}"
-      fi
-      echo "moving ${filea}" "${newpath}${filename}"
-      #mv -f "${filea}" "${newpath}${filename}"
-      exit 1
-    done
-    #find "$localdir" -depth -type d -empty
-    #find "$localdir" -depth -type d -empty -delete
+    if [[ ${totalfiles} -gt 1 ]]; then
+      echo "$files" | while read filea; do
+        echo "----------------------------------------------------------------------"
+        percent=$((((((x++))*100))/totalfiles))
+        echo "$percent% $filea"
+        last10=${localdir:(-10)}
+        filename="$(basename "$filea")"
+        temp=${filea%$filename*}
+        currentpath=${temp#*$last10*}
+        newpath="${remotedir}${currentpath}"
+        if [ -d "${newpath}" ]; then
+          ### Take action if $DIR exists ###
+          echo "Ok for this path ${newpath}"
+        else
+          echo "${newpath} not found... creating it"
+          mkdir -p "${newpath}"
+        fi
+        if [[ "c" == "${copymove}" ]]; then
+          echo "copying ${filea}" "${newpath}${filename}"
+          cp -f "${filea}" "${newpath}${filename}"
+        elif [[ "m" == "${copymove}" ]]; then
+          echo "moving ${filea}" "${newpath}${filename}"
+          mv -f "${filea}" "${newpath}${filename}"
+        else
+          echo "Bad Option"
+        fi
+
+        #break
+      done
+      find "$localdir" -depth -type d -empty
+      find "$localdir" -depth -type d -empty -delete
+    fi
     printf "=================================================== Total runtime: %d seconds\n" "$((`date '+%s'` - $start))"
   else
     echo "Nothing to do..."
     exit 1
   fi
+  echo "\n\n"
 }
