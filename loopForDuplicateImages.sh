@@ -78,7 +78,7 @@ convertImage(){
   if [ "$#" -eq 2 ]; then
     machine=$(runningMachine)
     if  [[ "$machine" == "Mac" ]]; then
-      convert > /tmp/tmp.tmp;
+      convert -version > /tmp/tmp.tmp;
       if [ $? -eq 127 ]; then
         brew install imagemagick@6;
       fi
