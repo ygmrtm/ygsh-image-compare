@@ -18,14 +18,14 @@ do
       to=${line%%$searchstr*}
       from=${line##*$searchstr}
       enableMv="false" ;
-      echo "[$from][$to.jpg]"
+      #echo "[$from][$to.jpg]"
       mv "$from" "$to.jpg"
    fi
    if [ "$var1" == "Moving" ] && [ "$var2" == "the" ] && [ "$var3" == "file..." ]; then
       enableMv="true" ;
       echo "[$line][$enableMv][$var1][$var2][$var3]"
    fi
-   #if [ $i -gt 267 ]; then
+   #if [ $i -gt 152 ]; then
    #   exit 2
    #fi
 done < "$1"
