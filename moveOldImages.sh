@@ -103,6 +103,7 @@ main(){
         if [[ "c" == "${copymove}" ]]; then
           echo "copying ${filea}" "${newpath}${filename}"
           cp -f "${filea}" "${newpath}${filename}"
+  
         elif [[ "m" == "${copymove}" ]]; then
           echo "moving ${filea}" "${newpath}${filename}"
           mv -f "${filea}" "${newpath}${filename}"
