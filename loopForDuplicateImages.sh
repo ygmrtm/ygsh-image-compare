@@ -1,5 +1,8 @@
 #! /bin/bash
 
+echo "DEPRECATED: This script has been replaced by find_duplicates.sh"
+exit 1
+
 dir=$(cd "$(dirname "$0")" || exit; pwd)
 logDir="${dir}/../logs/"
 
