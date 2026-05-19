@@ -1,40 +1,38 @@
-# Goal Description
-Create a new shell script to identify and move duplicate images and videos within a given folder. The previous script relied on ImageMagick (`convert`), which caused library issues. The new script will use file hashing (like `shasum` or `md5`) to identify exact duplicates natively without relying on 3rd-party libraries. It will track processed files, compare file ages to preserve the older file, move the newer duplicate to a staging folder, and generate a report at the end.
+# Implementation Plan - Selective Image Metadata Processing
+
+The goal is to modify `procesador_imagenes.sh` so it only "adjusts" (clears metadata from) files that actually contain sensitive information (GPS coordinates or device model). If no such metadata is found, the file should remain untouched.
 
 ## User Review Required
-> [!IMPORTANT]
-> **Duplicate Detection Strategy**: The proposed script will use **file hashing** (byte-for-byte comparison) to find exact duplicates. This means it will catch identical files perfectly and quickly, but it will *not* catch resized or visually similar but mathematically different images. Please confirm this exact-match approach is what you want.
-> 
-> **Staging Folder Location**: The plan is to create a `duplicates_staging` folder directly inside the input folder provided to the script. Is this location acceptable?
 
-## Open Questions
-> [!NOTE]
-> 1. Do you want me to name the new script something specific (e.g., `find_duplicates.sh`) or overwrite the existing `loopForDuplicateImages.sh`?
-> 2. Are there any specific video extensions you want to ensure are included beyond `.mp4`, `.mov`, `.avi`, `.mkv`?
+> [!IMPORTANT]
+> The definition of "sensitive metadata" is based on the tags currently being extracted by the script:
+> - **Exiftool mode**: `GPSLatitude`, `GPSLongitude`, and `Model`.
+> - **mdls mode**: `kMDItemLatitude`, `kMDItemLongitude`, and `kMDItemAcquisitionModel`.
+>
+> If any of these are present, the file will be cleaned. If none are present, the file will be skipped.
 
 ## Proposed Changes
 
-### Shell Script (New File)
-#### [NEW] `find_duplicates.sh` (or name of your choice)
-- **Input Validation**: Check that the input directory is provided and valid.
-- **State Tracking**: Use a `.processed_files.log` in the script's `logs/` directory to track absolute paths (or hashes) of files already analyzed, so they are skipped in future runs.
-- **File Iteration**: Find all images (`.jpg`, `.jpeg`, `.png`, `.gif`, `.heic`) and videos (`.mp4`, `.mov`, `.avi`, `.mkv`) in the input folder.
-- **Duplicate Logic**: 
-  - Compute the file hash (e.g., `md5`).
-  - If a hash is seen for the first time, store it.
-  - If a hash is already in our stored list, it's a duplicate.
-- **Age Comparison**: 
-  - Compare the modification times (using `stat`).
-  - Keep the older file in its place.
-  - Move the newer file to the `duplicates_staging` folder.
-- **Logging**: Write to `logs/moved_duplicates.log` with the timestamp, the original file, and the moved file.
-- **Report**: Print a summary report at the end showing: Total files scanned, files skipped (already processed), duplicates found, and files moved.
+### [MODIFY] [procesador_imagenes.sh](file:///Users/yg/Documents/GitHub/ygsh-image-compare/procesador_imagenes.sh)
+
+#### 1. Fix File Discovery Loop
+The current script uses `find ... > "$ALL_FILES"` and `read -r -d ''`. This is inconsistent because `find` outputs newlines by default, while `read -d ''` expects null terminators. This will be fixed to use `-print0`.
+
+#### 2. Implement Metadata Check
+- **In `exiftool` mode**: Use `exiftool -s -S` to check for the presence of the target tags.
+- **In `mdls` mode**: Check if the returned values are not `(null)` or empty.
+- Only execute the "cleaning" commands (`exiftool -all=`, `xattr -c`, `sips`) if sensitive data is found.
+
+#### 3. Enhance Logging
+Update the log messages to clearly state whether a file was "Adjusted" or "Skipped".
 
 ## Verification Plan
 
+### Automated Tests
+- Create test images with and without metadata.
+- Run the script in both `exiftool` and `mdls` modes.
+- Verify that only images with metadata have their modification times changed (or are reported as adjusted).
+
 ### Manual Verification
-1. Run the script on a test folder containing known duplicate images and videos.
-2. Verify the newer duplicates are moved to the staging folder.
-3. Verify the older files remain intact.
-4. Run the script a second time on the same folder to verify it skips already processed files and finishes quickly.
-5. Check `logs/moved_duplicates.log` for correct logging entries.
+- Check `logs/metadatos_imagenes.log` to confirm skips and adjustments.
+- Verify that `logs/metadatos_imagenes.csv` still contains the expected data for processed files.

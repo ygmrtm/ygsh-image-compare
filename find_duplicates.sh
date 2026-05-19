@@ -76,7 +76,7 @@ main() {
   find -L "$INPUT_FOLDER" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" -o -iname "*.heic" -o -iname "*.mp4" -o -iname "*.mov" -o -iname "*.avi" -o -iname "*.mkv" \) > "$ALL_FILES"
   
   total_files_found=$(wc -l < "$ALL_FILES" | tr -d ' ')
-  
+  echo "Files Found: $total_files_found"
   if [ "$total_files_found" -eq 0 ]; then
     echo "No media files found in $INPUT_FOLDER"
     rm -f "$ALL_FILES"
