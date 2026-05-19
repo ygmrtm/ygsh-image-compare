@@ -72,6 +72,10 @@ count=0
 if [ ! -f "$CSV_FILE" ]; then
     echo "Archivo,Latitud,Longitud,Equipo" > "$CSV_FILE"
 fi
+
+BACKUP_DIR="$(dirname "$INPUT_FOLDER")/respaldo_$(basename "$INPUT_FOLDER")_$(date +%Y%m%d_%H%M%S)"
+log_message "Directorio de respaldo configurado en: $BACKUP_DIR"
+
 while IFS= read -r filea; do
     echo "Processing $filea"
     [ -z "$filea" ] && continue
@@ -90,9 +94,16 @@ while IFS= read -r filea; do
         
         if [ -n "$SENSITIVE_DATA" ]; then
             echo "$filea,$DATA" | tr '\t' ',' >> "$CSV_FILE"
+            
+            # Crear respaldo antes de sobrescribir
+            REL_PATH="${filea#$INPUT_FOLDER/}"
+            DEST_BACKUP="$BACKUP_DIR/$REL_PATH"
+            mkdir -p "$(dirname "$DEST_BACKUP")"
+            cp -p "$filea" "$DEST_BACKUP"
+            
             # Limpiar (sobrescribir)
             exiftool -all= -overwrite_original "$filea" >> "$PROCESSED_LOG" 2>&1
-            log_message "Ajustado (metadatos sensibles eliminados): $filea"
+            log_message "Ajustado (metadatos sensibles eliminados y respaldado): $filea"
         else
             log_message "Omitido (sin metadatos sensibles): $filea"
         fi
@@ -106,11 +117,18 @@ while IFS= read -r filea; do
         # Check if sensitive metadata exists
         if [ "$LAT" != "(null)" ] || [ "$LON" != "(null)" ] || [ -n "$MOD" ]; then
             echo "$filea,$LAT,$LON,$MOD" >> "$CSV_FILE"
+            
+            # Crear respaldo antes de sobrescribir
+            REL_PATH="${filea#$INPUT_FOLDER/}"
+            DEST_BACKUP="$BACKUP_DIR/$REL_PATH"
+            mkdir -p "$(dirname "$DEST_BACKUP")"
+            cp -p "$filea" "$DEST_BACKUP"
+
             # Limpiar: mdls es solo lectura. Usamos xattr para quitar metadatos extendidos
             # y sips para forzar una resalida limpia de la imagen.
             xattr -c "$filea" >> "$PROCESSED_LOG" 2>&1
             sips -s format "$(echo ${filea##*.} | tr '[:upper:]' '[:lower:]')" "$filea" --out "$filea" >> "$PROCESSED_LOG" 2>&1
-            log_message "Ajustado (metadatos sensibles eliminados): $filea"
+            log_message "Ajustado (metadatos sensibles eliminados y respaldado): $filea"
         else
             log_message "Omitido (sin metadatos sensibles): $filea"
         fi
